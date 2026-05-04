@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+sentence-transformers
+scikit-learn
+python-dotenv
+apscheduler
+psycopg2
