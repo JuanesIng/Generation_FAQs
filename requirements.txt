@@ -3,6 +3,9 @@ uvicorn[standard]
 sentence-transformers
 scikit-learn
 transformers
+hdbscan>=0.8.33
 python-dotenv
 apscheduler
 psycopg2
+streamlit
+pytest
