@@ -1,0 +1,43 @@
+services:
+  ingest:
+    build: .
+    command: uvicorn services.ingest_service:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data
+    env_file: .env
+    restart: unless-stopped
+
+  suggestion:
+    build: .
+    command: uvicorn services.suggestion.main:app --host 0.0.0.0 --port 8003
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./data:/app/data
+      - hf_cache:/root/.cache/huggingface
+    env_file: .env
+    restart: unless-stopped
+
+  validation:
+    build: .
+    command: uvicorn services.validation_service:app --host 0.0.0.0 --port 8004
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./data:/app/data
+    env_file: .env
+    restart: unless-stopped
+
+  scheduler:
+    build: .
+    command: python scheduler.py
+    volumes:
+      - ./data:/app/data
+      - hf_cache:/root/.cache/huggingface
+    env_file: .env
+    restart: unless-stopped
+
+volumes:
+  hf_cache:
