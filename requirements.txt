@@ -3,9 +3,10 @@ uvicorn[standard]
 sentence-transformers
 scikit-learn
 transformers
-hdbscan>=0.8.33
 python-dotenv
 apscheduler
-psycopg2
+psycopg2-binary
 streamlit
+spacy>=3.7
+# Modelo NER español: python -m spacy download es_core_news_md
 pytest

@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import streamlit as st
@@ -7,7 +8,7 @@ from faq_common import DATA_DIR
 
 SUGGESTIONS_PATH = DATA_DIR / "faq_suggestions.json"
 VALIDATIONS_PATH = DATA_DIR / "faq_validations.json"
-VALIDATION_SERVICE_URL = "http://127.0.0.1:8004"
+VALIDATION_SERVICE_URL = os.getenv("VALIDATION_SERVICE_URL", "http://127.0.0.1:8004")
 
 st.set_page_config(page_title="FAQ Review Panel", layout="wide")
 st.title("Panel de revisión de FAQs")

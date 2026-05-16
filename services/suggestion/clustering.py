@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -24,10 +24,25 @@ def get_cluster_groups(labels: np.ndarray) -> Dict[int, List[int]]:
     return groups
 
 
-def get_centroid_index(indices: List[int], embeddings: np.ndarray) -> int:
+def get_centroid_index(
+    indices: List[int],
+    embeddings: np.ndarray,
+    texts: Optional[Sequence[str]] = None,
+) -> int:
     center = np.mean(embeddings[indices], axis=0)
     center = center / np.linalg.norm(center)
-    return max(indices, key=lambda idx: float(np.dot(embeddings[idx], center)))
+    similarity = {idx: float(np.dot(embeddings[idx], center)) for idx in indices}
+
+    if texts is not None:
+        top3 = sorted(indices, key=lambda idx: similarity[idx], reverse=True)[:3]
+        # Preferir candidatos con signo de pregunta
+        with_question = [idx for idx in top3 if "?" in texts[idx]]
+        if with_question:
+            return max(with_question, key=lambda idx: similarity[idx])
+        # Sin signo de pregunta: preferir el más corto entre los top-3
+        return min(top3, key=lambda idx: len(texts[idx]))
+
+    return max(indices, key=lambda idx: similarity[idx])
 
 
 def compute_support(indices: List[int], embeddings: np.ndarray) -> float:

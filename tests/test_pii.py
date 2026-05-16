@@ -25,3 +25,19 @@ def test_empty_input():
 def test_redacts_greeting_name():
     result = redact_personal_data("Hola María, cómo te podemos ayudar?")
     assert "María" not in result
+
+
+def test_redacts_person_name():
+    result = redact_personal_data("Necesito agendar una clase para Cristina Mendivelso hoy")
+    assert "Cristina" not in result
+    assert "Mendivelso" not in result
+
+
+def test_keeps_location_name():
+    result = redact_personal_data("cuánto vale el domicilio a San Lorenzo de abajo")
+    assert "San Lorenzo" in result
+
+
+def test_greeting_does_not_eat_sentence():
+    result = redact_personal_data("Hola para programar clase para niña de 6 años")
+    assert "programar" in result or "clase" in result

@@ -7,6 +7,7 @@ import numpy as np
 
 from faq_common import DATA_DIR, get_db_connection, load_json_lines, normalize_text, save_json
 from faq_models import SuggestionResponse, SuggestionSummary
+from metrics.cluster_metrics import save_run_metrics
 from services.suggestion.filters import is_existing_faq, is_good_faq_candidate
 from services.suggestion.clustering import (
     build_clusters,
@@ -20,6 +21,7 @@ from services.suggestion.pii import redact_personal_data
 
 FAQ_CLUSTER_EPS = float(os.getenv("FAQ_CLUSTER_EPS", "0.34"))
 FAQ_MIN_CLUSTER_SIZE = int(os.getenv("FAQ_MIN_CLUSTER_SIZE", "3"))
+FAQ_MAX_CLUSTER_SIZE = int(os.getenv("FAQ_MAX_CLUSTER_SIZE", "50"))
 FAQ_SKIP_EXISTING = os.getenv("FAQ_SKIP_EXISTING", "true").lower() in {"1", "true", "yes", "on"}
 FAQ_DUPLICATE_THRESHOLD = float(os.getenv("FAQ_DUPLICATE_THRESHOLD", "0.78"))
 FAQ_MIN_SUPPORT = float(os.getenv("FAQ_MIN_SUPPORT", "0.68"))
@@ -88,9 +90,14 @@ def build_company_suggestions(
     suggestions: List[SuggestionResponse] = []
 
     for indices in cluster_groups.values():
-        best_index = get_centroid_index(indices, embeddings)
+        # Rechazar clusters demasiado grandes
+        if len(indices) > FAQ_MAX_CLUSTER_SIZE:
+            continue
+
+        best_index = get_centroid_index(indices, embeddings, texts=user_texts)
         question_text = user_texts[best_index]
         representative = valid_items[best_index]
+        company_name = representative.get("company_name")
 
         if is_existing_faq(question_text, existing_questions, generator.encode, FAQ_DUPLICATE_THRESHOLD):
             continue
@@ -101,7 +108,7 @@ def build_company_suggestions(
 
         examples = []
         for idx in indices[:5]:
-            candidate = redact_personal_data(user_texts[idx])
+            candidate = redact_personal_data(user_texts[idx], protected_terms=[company_name] if company_name else [])
             if candidate not in examples:
                 examples.append(candidate)
 
@@ -115,16 +122,17 @@ def build_company_suggestions(
             question=question_text,
             examples=examples,
             historical_answers=answers,
-            company_name=representative.get("company_name"),
+            company_name=company_name,
         )
 
         cluster_score = round(min(100.0, 100.0 * len(indices) / len(valid_items)), 2)
+        clean_question = redact_personal_data(question_text, protected_terms=[company_name] if company_name else [])
 
         suggestions.append(SuggestionResponse(
             id=str(uuid.uuid4()),
             company_id=company_key(representative),
-            company_name=representative.get("company_name"),
-            question=question_text,
+            company_name=company_name,
+            question=clean_question,
             answer=answer_text,
             cluster_size=len(indices),
             support_examples=examples[:3],
@@ -161,13 +169,15 @@ def build_suggestions(conversations: List[Dict[str, str]], generator: AnswerGene
     if not suggestions:
         raise ValueError("Insufficient data to generate FAQ suggestions.")
 
+    avg_cluster = round(sum(s.cluster_size for s in suggestions) / len(suggestions), 2)
     summary = SuggestionSummary(
         company_count=len(conversations_by_company),
         cluster_count=len(suggestions),
         total_examples=total_examples,
-        average_cluster_size=round(total_examples / len(suggestions), 2),
+        average_cluster_size=avg_cluster,
         silhouette_score=round(sum(silhouettes) / len(silhouettes), 4) if silhouettes else None,
         suggestions=suggestions,
     )
     save_json(summary.dict(), SUGGESTIONS_PATH)
+    save_run_metrics(summary)
     return summary

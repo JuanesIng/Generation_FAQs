@@ -2,11 +2,23 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from faq_common import DATA_DIR, get_db_connection, load_json, save_json
-from faq_models import ValidationRequest, ValidationResponse, ValidationStatus
+from faq_models import (
+    SuggestionEditRequest,
+    ValidationRequest,
+    ValidationResponse,
+    ValidationStatus,
+)
 
 app = FastAPI(title="Everwod FAQ Validation Service")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 SUGGESTIONS_PATH = DATA_DIR / "faq_suggestions.json"
 VALIDATIONS_PATH = DATA_DIR / "faq_validations.json"
@@ -19,9 +31,9 @@ def load_suggestions() -> List[Dict[str, Any]]:
 
 
 def load_validations() -> List[Dict[str, Any]]:
-    if VALIDATIONS_PATH.exists():
-        return load_json(VALIDATIONS_PATH)
-    return []
+    if not VALIDATIONS_PATH.exists() or VALIDATIONS_PATH.stat().st_size == 0:
+        return []
+    return load_json(VALIDATIONS_PATH)
 
 
 def save_validations(validations: List[Dict[str, Any]]) -> None:
@@ -108,6 +120,30 @@ def promote(suggestion_id: str) -> dict:
         raise HTTPException(status_code=500, detail=f"Error al promover: {exc}")
 
     return {"promoted": True, "suggestion_id": suggestion_id}
+
+
+@app.patch("/suggestions/{suggestion_id}")
+def edit_suggestion(suggestion_id: str, body: SuggestionEditRequest) -> Dict[str, Any]:
+    if not SUGGESTIONS_PATH.exists():
+        raise HTTPException(status_code=404, detail="No suggestions file found.")
+    data = load_json(SUGGESTIONS_PATH)
+    suggestions = data.get("suggestions", [])
+    for s in suggestions:
+        if s["id"] == suggestion_id:
+            s["question"] = body.question
+            s["answer"] = body.answer
+            save_json(data, SUGGESTIONS_PATH)
+            return s
+    raise HTTPException(status_code=404, detail="Suggestion not found.")
+
+
+@app.get("/metrics/last")
+def get_last_metrics() -> Dict[str, Any]:
+    from metrics.cluster_metrics import load_all_metrics
+    runs = load_all_metrics()
+    if not runs:
+        raise HTTPException(status_code=404, detail="No metrics available yet.")
+    return runs[-1]
 
 
 if __name__ == "__main__":

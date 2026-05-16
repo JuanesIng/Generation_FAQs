@@ -1,13 +1,23 @@
+import asyncio
+import json
 from datetime import datetime, timedelta
 from collections import defaultdict
 from typing import Any, List
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from faq_common import DATA_DIR, get_db_connection, json_text, normalize_text, save_json_lines
 from faq_models import IngestRequest, IngestResponse
 
 app = FastAPI(title="Everwod FAQ Ingestion Service")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 OUTPUT_PATH = DATA_DIR / "conversations.jsonl"
 
@@ -16,60 +26,6 @@ def extract_text_from_message(payload: Any) -> str:
     if not payload:
         return ""
     return normalize_text(json_text(payload.get("content") if isinstance(payload, dict) else payload))
-
-
-# def fetch_conversation_records(limit: int = 15000, since_days: int = 90) -> List[dict]:
-#     since = datetime.utcnow() - timedelta(days=since_days)
-
-#     query = (
-#         "SELECT cm.agent_chat_id, cm.message, cm.created_at, ac.workspace_id, w.name "
-#         "FROM chat_messages cm "
-#         "JOIN agent_chats ac ON ac.id = cm.agent_chat_id "
-#         "LEFT JOIN workspaces w ON w.id = ac.workspace_id "
-#         "WHERE cm.created_at >= %s "
-#         "ORDER BY ac.workspace_id, cm.agent_chat_id, cm.created_at "
-#         "LIMIT %s"
-#     )
-
-#     with get_db_connection() as conn:
-#         with conn.cursor() as cursor:
-#             cursor.execute(query, (since, limit))
-#             rows = cursor.fetchall()
-
-#     conversations = []
-#     messages_by_chat = defaultdict(list)
-
-#     for row in rows:
-#         agent_chat_id, message_json, created_at, workspace_id, workspace_name = row
-#         messages_by_chat[agent_chat_id].append({
-#             "message": message_json,
-#             "created_at": created_at,
-#             "company_id": str(workspace_id) if workspace_id is not None else "unknown",
-#             "company_name": workspace_name,
-#         })
-
-#     for conversation_id, events in messages_by_chat.items():
-#         last_user_text = ""
-#         for event in sorted(events, key=lambda x: x["created_at"]):
-#             payload = event["message"]
-#             role = payload.get("role") if isinstance(payload, dict) else None
-#             text = extract_text_from_message(payload)
-#             if not text:
-#                 continue
-#             if role == "user":
-#                 last_user_text = text
-#             elif role == "assistant" and last_user_text:
-#                 conversations.append({
-#                     "company_id": event["company_id"],
-#                     "company_name": event["company_name"],
-#                     "conversation_id": str(conversation_id),
-#                     "user_text": last_user_text,
-#                     "assistant_text": text,
-#                     "created_at": event["created_at"].isoformat(),
-#                 })
-#                 last_user_text = ""
-
-#     return conversations
 
 def fetch_conversation_records(limit: int = 15000, since_days: int = 180) -> List[dict]:
     since = datetime.utcnow() - timedelta(days=since_days)
@@ -90,7 +46,7 @@ def fetch_conversation_records(limit: int = 15000, since_days: int = 180) -> Lis
         "FROM chat_messages cm "
         "JOIN agent_chats ac ON ac.id = cm.agent_chat_id "
         "LEFT JOIN workspaces w ON w.id = ac.workspace_id "
-        "WHERE cm.agent_chat_id = ANY(%s) "
+        "WHERE cm.agent_chat_id = ANY(%s::uuid[]) "
         "ORDER BY ac.workspace_id, cm.agent_chat_id, cm.created_at"
     )
 
@@ -149,7 +105,7 @@ def fetch_conversation_records(limit: int = 15000, since_days: int = 180) -> Lis
 
     return conversations
 
-def ingest(limit: int = 15000, since_days: int = 90) -> IngestResponse:
+def ingest(limit: int = 15000, since_days: int = 180) -> IngestResponse:
     records = fetch_conversation_records(limit=limit, since_days=since_days)
     save_json_lines(records, OUTPUT_PATH)
     return IngestResponse(imported_records=len(records), output_file=str(OUTPUT_PATH))
@@ -163,6 +119,39 @@ def health() -> dict:
 @app.post("/ingest", response_model=IngestResponse)
 def run_ingest(request: IngestRequest) -> IngestResponse:
     return ingest(limit=request.limit, since_days=request.since_days)
+
+
+@app.get("/ingest/stream")
+async def ingest_stream(limit: int = 15000, since_days: int = 180):
+    """Dispara la ingesta y transmite el progreso vía Server-Sent Events."""
+    _steps = [
+        "Conectando a la base de datos",
+        "Consultando conversaciones",
+        "Procesando mensajes",
+    ]
+
+    async def event_stream():
+        step_i = 0
+        yield f"data: {json.dumps({'step': 'Iniciando ingesta...'})}\n\n"
+        loop = asyncio.get_event_loop()
+        future = loop.run_in_executor(
+            None, lambda: ingest(limit=limit, since_days=since_days)
+        )
+        while not future.done():
+            yield f"data: {json.dumps({'step': _steps[step_i % len(_steps)] + '...'})}\n\n"
+            step_i += 1
+            await asyncio.sleep(3)
+        try:
+            result = future.result()
+            yield f"data: {json.dumps({'step': f'{result.imported_records} pares importados correctamente.', 'records': result.imported_records, 'done': True})}\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'error': str(exc), 'done': True})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 if __name__ == "__main__":

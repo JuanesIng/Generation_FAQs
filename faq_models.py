@@ -50,6 +50,11 @@ class SuggestionSummary(BaseModel):
     suggestions: List[SuggestionResponse]
 
 
+class SuggestionEditRequest(BaseModel):
+    question: str
+    answer: str
+
+
 class ValidationRequest(BaseModel):
     suggestion_id: str
     reviewer: str
