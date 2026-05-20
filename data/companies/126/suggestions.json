@@ -1,0 +1,37 @@
+{
+  "company_count": 1,
+  "cluster_count": 2,
+  "total_examples": 2225,
+  "average_cluster_size": 3.0,
+  "silhouette_score": 0.0604,
+  "suggestions": [
+    {
+      "id": "e619cb38-18e9-4016-84fb-1fcd87ee5473",
+      "company_id": "126",
+      "company_name": "Severas Medias",
+      "question": "Y tienes descuento de black Friday???",
+      "answer": "¡Hola! Como asistente, puedo ayudarte a responder preguntas sobre las ofertas de Black Friday. ¿En qué puedo ayudarte hoy?",
+      "cluster_size": 3,
+      "support_examples": [
+        "Hola, buenas. Tendrán promociones de black friday?",
+        "Y tienes descuento de black Friday???",
+        "Hay algun descuento por ser black friday?"
+      ],
+      "cluster_score": 0.13
+    },
+    {
+      "id": "c87a12d7-f986-4c7d-80a4-6373d288802e",
+      "company_id": "126",
+      "company_name": "Severas Medias",
+      "question": "Disculpa y se puede dejar en portería? O se debe recoger por la persona si o si",
+      "answer": "Disculpe, pero no puedo ayudarte con esta pregunta.",
+      "cluster_size": 3,
+      "support_examples": [
+        "Hola! Ya hablé con [persona], pero no han recibido nada, [persona] dice también que fueron ya entregadas pero no llegaron Me podrías por favor ayudar a revisar que puede estar pasando?",
+        "No lo dejan en portería? Pero han tenido algún inconveniente con las porterías? Es que yo cuando estoy trabajando en algunas ocasiones no puedo responder llamadas, pero nunca me han devuelto pedidos, ya que los dejan en la portería",
+        "Disculpa y se puede dejar en portería? O se debe recoger por la persona si o si"
+      ],
+      "cluster_score": 0.13
+    }
+  ]
+}

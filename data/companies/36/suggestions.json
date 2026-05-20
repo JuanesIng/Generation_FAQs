@@ -1,0 +1,37 @@
+{
+  "company_count": 1,
+  "cluster_count": 2,
+  "total_examples": 17,
+  "average_cluster_size": 3.5,
+  "silhouette_score": 0.2902,
+  "suggestions": [
+    {
+      "id": "685acf44-890a-4ada-a83c-27c6701af97f",
+      "company_id": "36",
+      "company_name": "Fitbox",
+      "question": "Pero no me da la información completa 🤷🏻",
+      "answer": "¡Hola! Estoy aquí para ayudarte con tu pregunta sobre Fitbox. Aquí tienes la información que necesitas: 1. **¿Qué es CrossFit?** - CrossFit es un programa de fitness que combina diferentes disciplinas como levantamiento de peso, entrenamiento cardiovascular y gimnasia. - Se centra en desarrollar la fuerza, resistencia, flexibilidad, velocidad y coordinación a través de ejercicios variados y funcionales. 2. **¿Cómo puedo reservar una clase de CrossFit en Fitbox?** - Para reservar una clase de CrossFit en Fitbox, puedes visitar su sitio web oficial o sus redes sociales. - Si tienes más preguntas, por favor, déjame saber. 3. **¿En qué parte de Colombia puedo encontrar Fitbox?** - Fitbox está ubic",
+      "cluster_size": 3,
+      "support_examples": [
+        "Me puedes regalar información sobre crossfit❓",
+        "Pero no me da la información completa 🤷🏻",
+        "Me puede regalar la dirección donde están ubicados en Tunja"
+      ],
+      "cluster_score": 17.65
+    },
+    {
+      "id": "ad5ccfe8-3b19-46de-8502-b82debfcf505",
+      "company_id": "36",
+      "company_name": "Fitbox",
+      "question": "puedes mandar mensajes a clientes inactivos?",
+      "answer": "¡Por supuesto! Aquí tienes una respuesta final: Para enviar mensajes a clientes inactivos, necesitarás: 1. **El texto del mensaje**: Escribe el contenido del mensaje que deseas enviar. 2. **A quiénes se los envío**: Indica cuántos mensajes quieres enviar (por ejemplo, 10). 3. **¿Envío individual o masivo?**: Si prefieres enviarlos individuales, haz clic en \"Individual\" en el menú superior. 4. **¿Quieres adjuntar una imagen/promoción?**: Si lo deseas, haz clic en \"Adjuntar imagen\" y selecciona la imagen que desees agregar. Si necesitas más detalles o ayuda con algo más, no dudes en preguntar. ¡Estoy aquí para ayudarte! 📱📱 Espero que esto",
+      "cluster_size": 4,
+      "support_examples": [
+        "puedes mandar mensajes a clientes inactivos?",
+        "[persona] ah todos los clientes inactivos que estan en la plataforma de manera individual (por separado, personalizado con nombre de cada uno ) ¿Eso se podria?",
+        "Perfecto , mándame ese mensaje ah todos los clientes inactivos"
+      ],
+      "cluster_score": 23.53
+    }
+  ]
+}

@@ -3,18 +3,15 @@ import json
 import queue
 import threading
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from faq_common import DATA_DIR, load_json
 from faq_models import SuggestionSummary
 from services.suggestion.generator import AnswerGenerator
 from services.suggestion.pipeline import build_suggestions, load_conversation_pairs
-
-SUGGESTIONS_PATH = DATA_DIR / "faq_suggestions.json"
 
 generator = AnswerGenerator()
 
@@ -45,24 +42,24 @@ def health() -> dict:
 
 
 @app.post("/suggest", response_model=SuggestionSummary)
-def suggest() -> SuggestionSummary:
-    conversations = load_conversation_pairs()
-    return build_suggestions(conversations, generator)
+def suggest(company_id: Optional[str] = None) -> SuggestionSummary:
+    conversations = load_conversation_pairs(company_id)
+    return build_suggestions(conversations, generator, company_id)
 
 
 
 @app.get("/pipeline/stream")
-async def pipeline_stream():
+async def pipeline_stream(company_id: Optional[str] = None):
     """Ejecuta el pipeline completo y transmite el progreso vía Server-Sent Events."""
     log_q: queue.Queue = queue.Queue()
 
     def run():
         try:
             log_q.put("Cargando conversaciones...")
-            convs = load_conversation_pairs()
+            convs = load_conversation_pairs(company_id)
             log_q.put(f"  {len(convs)} pares cargados")
             log_q.put("Ejecutando clustering y generación de respuestas...")
-            result = build_suggestions(convs, generator)
+            result = build_suggestions(convs, generator, company_id)
             log_q.put(f"  {result.company_count} empresas procesadas")
             log_q.put(f"  {result.cluster_count} sugerencias generadas")
             if result.silhouette_score is not None:

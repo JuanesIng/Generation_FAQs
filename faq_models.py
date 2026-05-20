@@ -5,9 +5,15 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
+class CompanyInfo(BaseModel):
+    id: str
+    name: Optional[str] = None
+
+
 class IngestRequest(BaseModel):
     limit: int = Field(15000, ge=100, le=50000)
     since_days: int = Field(180, ge=1, le=365)
+    company_id: Optional[str] = None
 
 
 class IngestResponse(BaseModel):

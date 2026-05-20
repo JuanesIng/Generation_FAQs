@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from faq_common import DATA_DIR, get_db_connection, load_json_lines, normalize_text, save_json
+from faq_common import DATA_DIR, company_data_dir, get_db_connection, load_json_lines, normalize_text, save_json
 from faq_models import SuggestionResponse, SuggestionSummary
 from metrics.cluster_metrics import save_run_metrics
 from services.suggestion.filters import is_existing_faq, is_good_faq_candidate
@@ -26,18 +26,27 @@ FAQ_SKIP_EXISTING = os.getenv("FAQ_SKIP_EXISTING", "true").lower() in {"1", "tru
 FAQ_DUPLICATE_THRESHOLD = float(os.getenv("FAQ_DUPLICATE_THRESHOLD", "0.78"))
 FAQ_MIN_SUPPORT = float(os.getenv("FAQ_MIN_SUPPORT", "0.68"))
 
-SUGGESTIONS_PATH = DATA_DIR / "faq_suggestions.json"
-CONVERSATIONS_PATH = DATA_DIR / "conversations.jsonl"
+_GLOBAL_SUGGESTIONS_PATH = DATA_DIR / "faq_suggestions.json"
+_GLOBAL_CONVERSATIONS_PATH = DATA_DIR / "conversations.jsonl"
+
+
+def _suggestions_path(company_id: Optional[str]):
+    return (company_data_dir(company_id) / "suggestions.json") if company_id else _GLOBAL_SUGGESTIONS_PATH
+
+
+def _conversations_path(company_id: Optional[str]):
+    return (company_data_dir(company_id) / "conversations.jsonl") if company_id else _GLOBAL_CONVERSATIONS_PATH
 
 
 def company_key(item: Dict[str, str]) -> str:
     return normalize_text(str(item.get("company_id") or item.get("workspace_id") or "unknown"))
 
 
-def load_conversation_pairs() -> List[Dict[str, str]]:
-    if not CONVERSATIONS_PATH.exists():
-        raise FileNotFoundError(f"Conversation file not found: {CONVERSATIONS_PATH}")
-    return load_json_lines(CONVERSATIONS_PATH)
+def load_conversation_pairs(company_id: Optional[str] = None) -> List[Dict[str, str]]:
+    path = _conversations_path(company_id)
+    if not path.exists():
+        raise FileNotFoundError(f"Conversation file not found: {path}")
+    return load_json_lines(path)
 
 
 def load_existing_faqs_by_company() -> Dict[str, List[str]]:
@@ -142,7 +151,11 @@ def build_company_suggestions(
     return suggestions, compute_silhouette(embeddings, labels)
 
 
-def build_suggestions(conversations: List[Dict[str, str]], generator: AnswerGenerator) -> SuggestionSummary:
+def build_suggestions(
+    conversations: List[Dict[str, str]],
+    generator: AnswerGenerator,
+    company_id: Optional[str] = None,
+) -> SuggestionSummary:
     if not conversations:
         raise ValueError("No conversation pairs available.")
 
@@ -178,6 +191,6 @@ def build_suggestions(conversations: List[Dict[str, str]], generator: AnswerGene
         silhouette_score=round(sum(silhouettes) / len(silhouettes), 4) if silhouettes else None,
         suggestions=suggestions,
     )
-    save_json(summary.dict(), SUGGESTIONS_PATH)
+    save_json(summary.dict(), _suggestions_path(company_id))
     save_run_metrics(summary)
     return summary

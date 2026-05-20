@@ -1,0 +1,23 @@
+{
+  "company_count": 1,
+  "cluster_count": 1,
+  "total_examples": 259,
+  "average_cluster_size": 4.0,
+  "silhouette_score": 0.1904,
+  "suggestions": [
+    {
+      "id": "4b646b03-1fa2-4935-b155-1e2be64a3129",
+      "company_id": "74",
+      "company_name": "Empire Box Cf",
+      "question": "Si quiero sabes más sobre programas de crossfit",
+      "answer": "¡Claro! Aquí tienes una respuesta corta y clara para tu pregunta sobre programas de CrossFit: **Resumen:** Empire Box Cf ofrece un programa de CrossFit adaptable a todas las habilidades y niveles de entrenador. Los entrenadores personalizan cada sesión según tu condición física y objetivo de fitness. **Aspectos clave:** - Adaptabilidad: Los entrenamientos son flexibles y adaptables a cualquier nivel de experiencia. - Variedad: Incluye ejercicios funcionales, gimnasia y cardio para mantener la motivación y mejorar tu condición física. - Comunidad: Forma parte de una comunidad de apoyo activa. - Progresión: Se ajusta a tu ritmo y mejora gradualmente tu rendimiento. Si estás interesado en probar una clase de CrossFit, puedes reservar una sesión",
+      "cluster_size": 4,
+      "support_examples": [
+        "Si quiero sabes más sobre programas de crossfit",
+        "Nunca he hecho CrossFit 😖",
+        "Condromalaci rotuliana, pero es manejable con ejercicios progresivos alternos No hay problema, ya he entrenado crossfit antes"
+      ],
+      "cluster_score": 1.54
+    }
+  ]
+}
