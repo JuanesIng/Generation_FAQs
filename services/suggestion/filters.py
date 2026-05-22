@@ -34,7 +34,7 @@ def is_good_faq_candidate(text: str) -> bool:
     if any(fragment in lowered for fragment in non_faq_fragments):
         return False
 
-    # Frases declarativas cortas que no son preguntas FAQ
+    
     declarative_starters = (
         "esta es", "este es", "estas son", "estos son",
         "aqui esta", "aquí está", "aquí esta",
@@ -48,7 +48,6 @@ def is_good_faq_candidate(text: str) -> bool:
     if "gracias" in lowered and word_count <= 5 and "?" not in text:
         return False
 
-    # Mensajes de bot, plantillas de operador o mensajes de ausencia
     bot_template_fragments = (
         "gracias por comunicarte con",
         "en este momento no estamos disponibles",
@@ -61,7 +60,6 @@ def is_good_faq_candidate(text: str) -> bool:
     if any(frag in lowered for frag in bot_template_fragments):
         return False
 
-    # Señal de pregunta: signo o verbo interrogativo
     has_question_signal = "?" in text or any(
         lowered.startswith(prefix)
         for prefix in (
@@ -73,9 +71,8 @@ def is_good_faq_candidate(text: str) -> bool:
         )
     )
 
-    # Intención de negocio: funcionalidades de plataforma + gimnasio
     intent_keywords = (
-        # Gimnasio / físico
+
         "precio", "precios", "plan", "planes", "mensualidad",
         "horario", "horarios", "ubicacion", "ubicación",
         "direccion", "dirección", "reservar", "reserva",
@@ -94,8 +91,6 @@ def is_good_faq_candidate(text: str) -> bool:
     )
     has_business_intent = any(keyword in lowered for keyword in intent_keywords)
 
-    # Con intención de negocio sola siempre alcanza
-    # Con señal de pregunta sola se requieren más de 5 palabras
     return has_business_intent or (has_question_signal and word_count >= 5)
 
 def is_existing_faq(question: str, existing_questions: List[str], encode_fn, threshold: float = 0.78) -> bool:

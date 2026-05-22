@@ -45,6 +45,8 @@ class SuggestionResponse(BaseModel):
     cluster_size: int
     support_examples: List[str]
     cluster_score: float
+    coherence_score: float
+    answer_relevance: float
 
 
 class SuggestionSummary(BaseModel):
@@ -52,7 +54,8 @@ class SuggestionSummary(BaseModel):
     cluster_count: int
     total_examples: int
     average_cluster_size: float
-    silhouette_score: Optional[float]
+    avg_coherence_score: Optional[float]
+    avg_answer_relevance: Optional[float]
     suggestions: List[SuggestionResponse]
 
 
@@ -67,7 +70,7 @@ class ValidationRequest(BaseModel):
     status: ValidationStatus
     notes: Optional[str] = None
     reviewed_at: Optional[datetime] = None
-
+    company_id: Optional[str] = None
 
 class ValidationResponse(BaseModel):
     suggestion_id: str
@@ -75,3 +78,6 @@ class ValidationResponse(BaseModel):
     status: ValidationStatus
     notes: Optional[str] = None
     reviewed_at: datetime
+
+class PromoteRequest(BaseModel):
+    company_id: Optional[str] = None

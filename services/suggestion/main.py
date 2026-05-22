@@ -62,8 +62,10 @@ async def pipeline_stream(company_id: Optional[str] = None):
             result = build_suggestions(convs, generator, company_id)
             log_q.put(f"  {result.company_count} empresas procesadas")
             log_q.put(f"  {result.cluster_count} sugerencias generadas")
-            if result.silhouette_score is not None:
-                log_q.put(f"  Silhouette score: {result.silhouette_score:.3f}")
+            if result.avg_coherence_score is not None:
+                log_q.put(f"  Coherencia: {result.avg_coherence_score:.3f}")
+            if result.avg_answer_relevance is not None:
+                log_q.put(f"  Relevancia respuesta: {result.avg_answer_relevance:.3f}")
             log_q.put("Pipeline completado.")
         except Exception as exc:
             log_q.put(f"Error: {exc}")
@@ -76,7 +78,7 @@ async def pipeline_stream(company_id: Optional[str] = None):
         loop = asyncio.get_event_loop()
         while True:
             try:
-                msg = await loop.run_in_executor(None, lambda: log_q.get(timeout=3))
+                msg = await loop.run_in_executor(None, lambda: log_q.get(timeout=60))
             except queue.Empty:
                 yield f"data: {json.dumps({'step': 'Procesando...'})}\n\n"
                 continue

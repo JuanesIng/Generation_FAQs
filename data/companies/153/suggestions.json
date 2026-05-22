@@ -1,0 +1,170 @@
+{
+  "company_count": 1,
+  "cluster_count": 10,
+  "total_examples": 287,
+  "average_cluster_size": 5.5,
+  "avg_coherence_score": 0.8938,
+  "avg_answer_relevance": 0.6061,
+  "suggestions": [
+    {
+      "id": "5b86b469-4497-4f13-b4a5-f80174a906dd",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "Quiero hablar con un asesor",
+      "answer": "¡Por supuesto! Para hablar con un asesor, puedes comunicarte con nuestro equipo de soporte a través del número oficial de contacto. Ellos estarán encantados de ayudarte con cualquier consulta que tengas. 📲💗",
+      "cluster_size": 6,
+      "support_examples": [
+        "Quiero hablar con un asesor",
+        "Quiero para una primera comunion",
+        "Quiero hablar con un humano"
+      ],
+      "cluster_score": 2.09,
+      "coherence_score": 0.9249,
+      "answer_relevance": 0.5518
+    },
+    {
+      "id": "2b52027f-636f-4229-9f23-33f555e4fcf5",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "desde que precio tienes detalle?",
+      "answer": "Desde el primer día, hemos ofrecer detalles desde $85,000 hasta $130,000, incluyendo domicilio gratuito en algunas ciudades. Si necesitas más información o quieres ver el catálogo, no dudes en contactarnos. ¡Estoy aquí para ayudarte! 🎉",
+      "cluster_size": 11,
+      "support_examples": [
+        "detalles desde que precio tienen",
+        "desde que precio tienes detalle?",
+        "[persona] clasico, que precio tiene el envio?"
+      ],
+      "cluster_score": 3.83,
+      "coherence_score": 0.8759,
+      "answer_relevance": 0.3328
+    },
+    {
+      "id": "7a40b053-ad10-42c3-8e37-c910cf38e7ef",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "que cuesta el box hombre?",
+      "answer": "Para Bogotá: El \"Box Hombre\" tiene un costo de 105,000 pesos. No tengo el detalle específico del \"Box Hombre\" en este momento, pero puedo pasarte el catálogo completo de Bogotá para que puedas verlo y elegir lo que más te guste. ¿Te gustaría que te lo envíe? 📦✨ Para conocer el \"Box Mujer\": Para conocer los detalles específicos del \"Box Mujer\", puedes consultar nuestro catálogo de Bogotá. ¿Me podrías proporcionar la ciudad en la que necesitas el detalle? Así te envío el catálogo correspondiente. 😊",
+      "cluster_size": 6,
+      "support_examples": [
+        "que cuesta el box hombre?",
+        "que precio tiene el box hombre",
+        "EL precio del box hombre?"
+      ],
+      "cluster_score": 2.09,
+      "coherence_score": 0.8957,
+      "answer_relevance": 0.6697
+    },
+    {
+      "id": "1b3dc89c-5321-4377-a20a-9dd439badab3",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "Puedo agendar con la mitad o debo pagar todo?",
+      "answer": "¡Por supuesto! Aquí tienes una respuesta final: **Respuesta:** Para agendar con la mitad o debo pagar todo, debes proporcionar los siguientes datos: - Nombre y teléfono de quien recibe - Tu nombre, número de cédula y correo electrónico - Dirección exacta de entrega - Mensaje de la tarjeta (solo texto, máximo 150 palabras) Si necesitas más ayuda con el proceso de pago, déjame saber. 📞 **Nota:** Siempre revisa nuestros términos y condiciones y horarios de entrega antes de realizar tu compra. 😊",
+      "cluster_size": 8,
+      "support_examples": [
+        "que datos necesitan para agendar?",
+        "Puedo pagar cuando llegue?",
+        "Puedo agendar con la mitad?"
+      ],
+      "cluster_score": 2.79,
+      "coherence_score": 0.8065,
+      "answer_relevance": 0.599
+    },
+    {
+      "id": "08232c02-55a1-473d-885d-53a0a70ea1ab",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "como los encuentro en instagram?",
+      "answer": "Si estás buscando los encuentros en Instagram, puedes seguir a nuestra cuenta oficial en Instagram llamada **pizcadeamor_desayunos**. También puedes visitar nuestra página web para obtener más detalles sobre cómo interactuar con nosotros en Instagram. ¡Espero que encuentres nuestros productos y experiencias únicas! 🌟✨",
+      "cluster_size": 3,
+      "support_examples": [
+        "como los encuentro en instagram?",
+        "Como los encuentro en isntagram",
+        "como es el link de instagram"
+      ],
+      "cluster_score": 1.05,
+      "coherence_score": 0.9466,
+      "answer_relevance": 0.7695
+    },
+    {
+      "id": "f19a059f-6dea-402f-9f50-1e3ff4d4f425",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "La fotografía de que tamaño es?",
+      "answer": "La fotografía que se incluirá en el Mug Personalizado es de tamaño estándar para encajar bien en el diseño del mug, asegurándose de que se vea claramente y con buena calidad. Si tienes una foto en mente, simplemente asegúrate de que tenga buena resolución. 😊 ¿Te gustaría continuar con la personalización o hay algo más en lo que pueda ayudarte?",
+      "cluster_size": 4,
+      "support_examples": [
+        "La fotografía de que tamaño es?",
+        "Se puede adicionar fotografía ??",
+        "Envíame la foto? Vamos a empezar una nueva conversación de cero sin información"
+      ],
+      "cluster_score": 1.39,
+      "coherence_score": 0.9013,
+      "answer_relevance": 0.7256
+    },
+    {
+      "id": "53282956-e20d-4f74-9e4a-8a7a9026fed6",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "Se puede a las 11 de la mañana? ?",
+      "answer": "Las entregas se realizan entre 6:00 y 10:00 am, sin una hora fija. Si necesitas una hora puntual, puedes contactarme con un asesor para validar opciones especiales de entrega.",
+      "cluster_size": 7,
+      "support_examples": [
+        "quisiera saber si pueden entregarlo en esa direccion a las 7 am?",
+        "Pueden entregarlo a las 7?",
+        "Cómo podemos cuadrar que sea a las 11"
+      ],
+      "cluster_score": 2.44,
+      "coherence_score": 0.8214,
+      "answer_relevance": 0.5199
+    },
+    {
+      "id": "0d955234-5908-42d2-9b9d-39b1b88b7981",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "Mejor necesito enviarlo\n",
+      "answer": "¡Por supuesto! Aquí tienes una respuesta a tu pregunta: Para hoy en Pizca De Amor Desayunos Sas, puedes enviarnoslo hoy si deseas. Sin embargo, si tienes alguna otra fecha específica en mente, por favor informa y te asombrará con la disponibilidad. Si necesitas ayuda con el envío, estaré encantado de asistirte. ¡Estoy aquí para ayudarte! 🎉",
+      "cluster_size": 3,
+      "support_examples": [
+        "Mejor necesito enviarlo hoy",
+        "Necesito para Yopal para hoy",
+        "Necesito uno para hoy en bosa"
+      ],
+      "cluster_score": 1.05,
+      "coherence_score": 0.9231,
+      "answer_relevance": 0.4768
+    },
+    {
+      "id": "e9351a37-f4e6-4730-85dc-afb33c8a7818",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "Usaquen pero tienes fotos ?",
+      "answer": "Usaquen pero tienes fotos. ¡Tienen fotos del dulce despertar! 🎉",
+      "cluster_size": 4,
+      "support_examples": [
+        "Tienes foto del momento premier?",
+        "Tienes fotos del dulce despertar?",
+        "Usaquen pero tienes fotos ?"
+      ],
+      "cluster_score": 1.39,
+      "coherence_score": 0.8962,
+      "answer_relevance": 0.8193
+    },
+    {
+      "id": "bc9cdd7a-f6a3-43df-ae73-f7a6ab975e52",
+      "company_id": "153",
+      "company_name": "Pizca De Amor Desayunos Sas",
+      "question": "Momento premier es cual ?",
+      "answer": "El Momento Premier es una opción elegante y moderna para tu desayuno saboroso. Es ideal para locales de Bogotá y eventos de celebración. Te recomendaría que te pongas en contacto con Pizca De Amor para obtener más detalles sobre el diseño y la entrega.",
+      "cluster_size": 3,
+      "support_examples": [
+        "Me gustaría el momento premier",
+        "Momento premier es cual ?",
+        "Me gustaría el de momentos premier"
+      ],
+      "cluster_score": 1.05,
+      "coherence_score": 0.9459,
+      "answer_relevance": 0.597
+    }
+  ]
+}

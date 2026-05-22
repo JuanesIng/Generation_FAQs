@@ -1,0 +1,8 @@
+{
+  "run_at": "2026-05-20T18:00:03.729633",
+  "company_count": 1,
+  "cluster_count": 1,
+  "total_examples": 6,
+  "average_cluster_size": 3.0,
+  "silhouette_score": null
+}

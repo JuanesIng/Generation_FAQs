@@ -13,7 +13,6 @@ _LOCATIVE_PREPS = {"a", "en", "desde", "hasta", "hacia"}
 
 
 def _get_nlp():
-    """Carga el modelo spaCy de forma lazy. Intenta 'md' primero, luego 'sm'."""
     global _nlp
     if _nlp is None:
         for model in ("es_core_news_md", "es_core_news_sm"):
@@ -29,7 +28,6 @@ def _get_nlp():
 
 
 def _is_location_entity(ent, doc) -> bool:
-    """Heurístico: entidad PER que parece topónimo, no nombre de persona."""
     first_word = ent.text.lower().split()[0]
     if first_word in _LOCATION_PREFIXES:
         return True
@@ -43,8 +41,6 @@ def redact_personal_data(text: str, protected_terms: Optional[List[str]] = None)
     if not text:
         return ""
 
-    # Proteger términos de empresa/marca antes de cualquier redacción.
-    # El placeholder usa minúsculas para que spaCy no lo trate como entidad.
     protected_values: Dict[str, str] = {}
     for index, term in enumerate(protected_terms or []):
         clean_term = normalize_text(term)

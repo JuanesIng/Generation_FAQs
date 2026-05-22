@@ -43,7 +43,6 @@ def fetch_conversation_records(
         "LIMIT %s"
     )
 
-    # ...luego traemos TODOS sus mensajes sin límite artificial.
     msg_query = (
         "SELECT cm.agent_chat_id, cm.message, cm.created_at, ac.workspace_id, w.name "
         "FROM chat_messages cm "
@@ -83,8 +82,6 @@ def fetch_conversation_records(
     for conversation_id, events in messages_by_chat.items():
         sorted_events = sorted(events, key=lambda x: x["created_at"])
         
-        # FIX 2: Acumulamos todos los turnos de usuario consecutivos antes
-        # de un assistant, en lugar de solo el último.
         pending_user_texts = []
 
         for event in sorted_events:
@@ -154,7 +151,7 @@ def run_ingest(request: IngestRequest) -> IngestResponse:
 
 @app.get("/ingest/stream")
 async def ingest_stream(limit: int = 15000, since_days: int = 180, company_id: Optional[str] = None):
-    """Dispara la ingesta y transmite el progreso vía Server-Sent Events."""
+    
     _steps = [
         "Conectando a la base de datos",
         "Consultando conversaciones",

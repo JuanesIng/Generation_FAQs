@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from faq_common import DATA_DIR, company_data_dir, get_db_connection, load_json, save_json
 from faq_models import (
+    PromoteRequest,
     SuggestionEditRequest,
     ValidationRequest,
     ValidationResponse,
@@ -104,7 +105,8 @@ def get_validations(company_id: Optional[str] = None) -> List[Dict[str, Any]]:
 
 
 @app.post("/validate", response_model=ValidationResponse)
-def validate(request: ValidationRequest, company_id: Optional[str] = None) -> ValidationResponse:
+def validate(request: ValidationRequest) -> ValidationResponse:
+    company_id = request.company_id
     try:
         suggestions = load_suggestions(company_id)
     except FileNotFoundError as exc:
@@ -122,13 +124,19 @@ def validate(request: ValidationRequest, company_id: Optional[str] = None) -> Va
         "notes": request.notes,
         "reviewed_at": reviewed_at.isoformat(),
     }
+    for i, v in enumerate(validations):
+        if v["suggestion_id"] == request.suggestion_id:
+            validations[i] = entry
+            save_validations(validations, company_id)
+            return ValidationResponse(**entry)
     validations.append(entry)
     save_validations(validations, company_id)
     return ValidationResponse(**entry)
 
 
 @app.post("/promote/{suggestion_id}")
-def promote(suggestion_id: str, company_id: Optional[str] = None) -> dict:
+def promote(suggestion_id: str, body: PromoteRequest = PromoteRequest()) -> dict:
+    company_id = body.company_id
     validation = get_validation_by_id(suggestion_id, company_id)
     if not validation:
         raise HTTPException(status_code=404, detail="No validation found for this suggestion.")
@@ -163,9 +171,9 @@ def promote(suggestion_id: str, company_id: Optional[str] = None) -> dict:
 
 
 @app.get("/metrics/last")
-def get_last_metrics() -> Dict[str, Any]:
+def get_last_metrics(company_id: Optional[str] = None) -> Dict[str, Any]:
     from metrics.cluster_metrics import load_all_metrics
-    runs = load_all_metrics()
+    runs = load_all_metrics(company_id)
     if not runs:
         raise HTTPException(status_code=404, detail="No metrics available yet.")
     return runs[-1]

@@ -1,0 +1,9 @@
+{
+  "run_at": "2026-05-20T19:41:30.725601",
+  "company_count": 1,
+  "cluster_count": 92,
+  "total_examples": 2217,
+  "average_cluster_size": 5.35,
+  "avg_coherence_score": 0.9306,
+  "avg_answer_relevance": 0.5893
+}

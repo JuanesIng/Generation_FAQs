@@ -36,7 +36,8 @@ def scheduled_pipeline() -> None:
 
                 summary = build_suggestions(conversations, generator, company.id)
                 print(f"    - Sugerencias generadas: {summary.cluster_count}")
-                print(f"    - Silhouette: {summary.silhouette_score}")
+                print(f"    - Coherencia: {summary.avg_coherence_score}")
+                print(f"    - Relevancia respuesta: {summary.avg_answer_relevance}")
 
             except Exception as exc:
                 print(f"    - Falló para {label}: {exc}")
@@ -49,7 +50,7 @@ def scheduled_pipeline() -> None:
 
 if __name__ == "__main__":
     scheduler = BlockingScheduler()
-    scheduler.add_job(scheduled_pipeline, "interval", hours=24, next_run_time=datetime.now())
+    scheduler.add_job(scheduled_pipeline, "interval", hours=24)
     print("Scheduler iniciado: el job se ejecutará cada 24 horas.")
     try:
         scheduler.start()
