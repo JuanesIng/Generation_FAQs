@@ -83,3 +83,10 @@ def load_json_lines(path: Path) -> List[Dict[str, Any]]:
             if payload:
                 records.append(json.loads(payload))
     return records
+
+
+def company_data_dir(company_id: str) -> Path:
+    """Devuelve (y crea si no existe) el directorio de datos de una empresa."""
+    path = DATA_DIR / "companies" / company_id
+    path.mkdir(parents=True, exist_ok=True)
+    return path

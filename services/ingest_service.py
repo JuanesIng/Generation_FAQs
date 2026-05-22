@@ -2,14 +2,14 @@ import asyncio
 import json
 from datetime import datetime, timedelta
 from collections import defaultdict
-from typing import Any, List
+from typing import Any, List, Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from faq_common import DATA_DIR, get_db_connection, json_text, normalize_text, save_json_lines
-from faq_models import IngestRequest, IngestResponse
+from faq_common import DATA_DIR, company_data_dir, get_db_connection, json_text, normalize_text, save_json_lines
+from faq_models import CompanyInfo, IngestRequest, IngestResponse
 
 app = FastAPI(title="Everwod FAQ Ingestion Service")
 app.add_middleware(
@@ -27,20 +27,22 @@ def extract_text_from_message(payload: Any) -> str:
         return ""
     return normalize_text(json_text(payload.get("content") if isinstance(payload, dict) else payload))
 
-def fetch_conversation_records(limit: int = 15000, since_days: int = 180) -> List[dict]:
+def fetch_conversation_records(
+    limit: int = 15000,
+    since_days: int = 180,
+    company_id: Optional[str] = None,
+) -> List[dict]:
     since = datetime.utcnow() - timedelta(days=since_days)
 
-    # FIX 1: El LIMIT ahora aplica sobre conversaciones distintas, no mensajes.
-    # Primero obtenemos los IDs de conversaciones elegibles...
+    company_clause = "AND ac.workspace_id::text = %s " if company_id else ""
     id_query = (
         "SELECT DISTINCT cm.agent_chat_id "
         "FROM chat_messages cm "
         "JOIN agent_chats ac ON ac.id = cm.agent_chat_id "
-        "WHERE cm.created_at >= %s "
+        f"WHERE cm.created_at >= %s {company_clause}"
         "LIMIT %s"
     )
 
-    # ...luego traemos TODOS sus mensajes sin límite artificial.
     msg_query = (
         "SELECT cm.agent_chat_id, cm.message, cm.created_at, ac.workspace_id, w.name "
         "FROM chat_messages cm "
@@ -50,9 +52,14 @@ def fetch_conversation_records(limit: int = 15000, since_days: int = 180) -> Lis
         "ORDER BY ac.workspace_id, cm.agent_chat_id, cm.created_at"
     )
 
+    id_params: List[Any] = [since]
+    if company_id:
+        id_params.append(company_id)
+    id_params.append(limit)
+
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            cursor.execute(id_query, (since, limit))
+            cursor.execute(id_query, id_params)
             chat_ids = [row[0] for row in cursor.fetchall()]
 
             if not chat_ids:
@@ -75,8 +82,6 @@ def fetch_conversation_records(limit: int = 15000, since_days: int = 180) -> Lis
     for conversation_id, events in messages_by_chat.items():
         sorted_events = sorted(events, key=lambda x: x["created_at"])
         
-        # FIX 2: Acumulamos todos los turnos de usuario consecutivos antes
-        # de un assistant, en lugar de solo el último.
         pending_user_texts = []
 
         for event in sorted_events:
@@ -105,10 +110,15 @@ def fetch_conversation_records(limit: int = 15000, since_days: int = 180) -> Lis
 
     return conversations
 
-def ingest(limit: int = 15000, since_days: int = 180) -> IngestResponse:
-    records = fetch_conversation_records(limit=limit, since_days=since_days)
-    save_json_lines(records, OUTPUT_PATH)
-    return IngestResponse(imported_records=len(records), output_file=str(OUTPUT_PATH))
+def ingest(
+    limit: int = 15000,
+    since_days: int = 180,
+    company_id: Optional[str] = None,
+) -> IngestResponse:
+    records = fetch_conversation_records(limit=limit, since_days=since_days, company_id=company_id)
+    output_path = (company_data_dir(company_id) / "conversations.jsonl") if company_id else OUTPUT_PATH
+    save_json_lines(records, output_path)
+    return IngestResponse(imported_records=len(records), output_file=str(output_path))
 
 
 @app.get("/health")
@@ -116,14 +126,32 @@ def health() -> dict:
     return {"status": "ok", "service": "ingest"}
 
 
+@app.get("/companies")
+def list_companies(since_days: int = 180) -> List[CompanyInfo]:
+    since = datetime.utcnow() - timedelta(days=since_days)
+    query = (
+        "SELECT DISTINCT w.id::text, w.name "
+        "FROM workspaces w "
+        "JOIN agent_chats ac ON ac.workspace_id = w.id "
+        "JOIN chat_messages cm ON cm.agent_chat_id = ac.id "
+        "WHERE cm.created_at >= %s "
+        "ORDER BY w.name"
+    )
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query, (since,))
+            rows = cursor.fetchall()
+    return [CompanyInfo(id=str(row[0]), name=row[1]) for row in rows]
+
+
 @app.post("/ingest", response_model=IngestResponse)
 def run_ingest(request: IngestRequest) -> IngestResponse:
-    return ingest(limit=request.limit, since_days=request.since_days)
+    return ingest(limit=request.limit, since_days=request.since_days, company_id=request.company_id)
 
 
 @app.get("/ingest/stream")
-async def ingest_stream(limit: int = 15000, since_days: int = 180):
-    """Dispara la ingesta y transmite el progreso vía Server-Sent Events."""
+async def ingest_stream(limit: int = 15000, since_days: int = 180, company_id: Optional[str] = None):
+    
     _steps = [
         "Conectando a la base de datos",
         "Consultando conversaciones",
@@ -135,7 +163,7 @@ async def ingest_stream(limit: int = 15000, since_days: int = 180):
         yield f"data: {json.dumps({'step': 'Iniciando ingesta...'})}\n\n"
         loop = asyncio.get_event_loop()
         future = loop.run_in_executor(
-            None, lambda: ingest(limit=limit, since_days=since_days)
+            None, lambda: ingest(limit=limit, since_days=since_days, company_id=company_id)
         )
         while not future.done():
             yield f"data: {json.dumps({'step': _steps[step_i % len(_steps)] + '...'})}\n\n"

@@ -1,17 +1,17 @@
 import os
+import re
 import uuid
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import numpy as np
 
-from faq_common import DATA_DIR, get_db_connection, load_json_lines, normalize_text, save_json
+from faq_common import DATA_DIR, company_data_dir, get_db_connection, load_json_lines, normalize_text, save_json
 from faq_models import SuggestionResponse, SuggestionSummary
 from metrics.cluster_metrics import save_run_metrics
 from services.suggestion.filters import is_existing_faq, is_good_faq_candidate
 from services.suggestion.clustering import (
     build_clusters,
-    compute_silhouette,
     compute_support,
     get_centroid_index,
     get_cluster_groups,
@@ -19,6 +19,7 @@ from services.suggestion.clustering import (
 from services.suggestion.generator import AnswerGenerator
 from services.suggestion.pii import redact_personal_data
 
+FAQ_CLUSTER_ALGO = os.getenv("FAQ_CLUSTER_ALGO", "hdbscan")
 FAQ_CLUSTER_EPS = float(os.getenv("FAQ_CLUSTER_EPS", "0.34"))
 FAQ_MIN_CLUSTER_SIZE = int(os.getenv("FAQ_MIN_CLUSTER_SIZE", "3"))
 FAQ_MAX_CLUSTER_SIZE = int(os.getenv("FAQ_MAX_CLUSTER_SIZE", "50"))
@@ -26,18 +27,27 @@ FAQ_SKIP_EXISTING = os.getenv("FAQ_SKIP_EXISTING", "true").lower() in {"1", "tru
 FAQ_DUPLICATE_THRESHOLD = float(os.getenv("FAQ_DUPLICATE_THRESHOLD", "0.78"))
 FAQ_MIN_SUPPORT = float(os.getenv("FAQ_MIN_SUPPORT", "0.68"))
 
-SUGGESTIONS_PATH = DATA_DIR / "faq_suggestions.json"
-CONVERSATIONS_PATH = DATA_DIR / "conversations.jsonl"
+_GLOBAL_SUGGESTIONS_PATH = DATA_DIR / "faq_suggestions.json"
+_GLOBAL_CONVERSATIONS_PATH = DATA_DIR / "conversations.jsonl"
+
+
+def _suggestions_path(company_id: Optional[str]):
+    return (company_data_dir(company_id) / "suggestions.json") if company_id else _GLOBAL_SUGGESTIONS_PATH
+
+
+def _conversations_path(company_id: Optional[str]):
+    return (company_data_dir(company_id) / "conversations.jsonl") if company_id else _GLOBAL_CONVERSATIONS_PATH
 
 
 def company_key(item: Dict[str, str]) -> str:
     return normalize_text(str(item.get("company_id") or item.get("workspace_id") or "unknown"))
 
 
-def load_conversation_pairs() -> List[Dict[str, str]]:
-    if not CONVERSATIONS_PATH.exists():
-        raise FileNotFoundError(f"Conversation file not found: {CONVERSATIONS_PATH}")
-    return load_json_lines(CONVERSATIONS_PATH)
+def load_conversation_pairs(company_id: Optional[str] = None) -> List[Dict[str, str]]:
+    path = _conversations_path(company_id)
+    if not path.exists():
+        raise FileNotFoundError(f"Conversation file not found: {path}")
+    return load_json_lines(path)
 
 
 def load_existing_faqs_by_company() -> Dict[str, List[str]]:
@@ -70,7 +80,7 @@ def build_company_suggestions(
     conversations: List[Dict[str, str]],
     generator: AnswerGenerator,
     existing_questions: Optional[List[str]] = None,
-) -> Tuple[List[SuggestionResponse], Optional[float]]:
+) -> List[SuggestionResponse]:
     existing_questions = existing_questions or []
 
     valid_items = [
@@ -80,17 +90,21 @@ def build_company_suggestions(
     ]
 
     if len(valid_items) < FAQ_MIN_CLUSTER_SIZE:
-        return [], None
+        return []
 
     user_texts = [item["user_text"] for item in valid_items]
     embeddings = generator.encode(user_texts)
-    labels = build_clusters(embeddings, eps=FAQ_CLUSTER_EPS, min_samples=FAQ_MIN_CLUSTER_SIZE)
+    labels = build_clusters(
+        embeddings,
+        algo=FAQ_CLUSTER_ALGO,
+        min_cluster_size=FAQ_MIN_CLUSTER_SIZE,
+        eps=FAQ_CLUSTER_EPS,
+    )
     cluster_groups = get_cluster_groups(labels)
 
     suggestions: List[SuggestionResponse] = []
 
     for indices in cluster_groups.values():
-        # Rechazar clusters demasiado grandes
         if len(indices) > FAQ_MAX_CLUSTER_SIZE:
             continue
 
@@ -99,11 +113,14 @@ def build_company_suggestions(
         representative = valid_items[best_index]
         company_name = representative.get("company_name")
 
+        if re.search(r'\[.+?\]', question_text):
+            continue
+
         if is_existing_faq(question_text, existing_questions, generator.encode, FAQ_DUPLICATE_THRESHOLD):
             continue
 
-        support = compute_support(indices, embeddings)
-        if support < FAQ_MIN_SUPPORT:
+        coherence_score = compute_support(indices, embeddings)
+        if coherence_score < FAQ_MIN_SUPPORT:
             continue
 
         examples = []
@@ -125,6 +142,13 @@ def build_company_suggestions(
             company_name=company_name,
         )
 
+        if re.search(r'\[.+?\]', answer_text):
+            continue
+
+        answer_emb = generator.encode([answer_text])[0]
+        answer_emb_norm = answer_emb / np.linalg.norm(answer_emb)
+        answer_relevance = round(float(np.dot(embeddings[best_index], answer_emb_norm)), 4)
+
         cluster_score = round(min(100.0, 100.0 * len(indices) / len(valid_items)), 2)
         clean_question = redact_personal_data(question_text, protected_terms=[company_name] if company_name else [])
 
@@ -137,47 +161,54 @@ def build_company_suggestions(
             cluster_size=len(indices),
             support_examples=examples[:3],
             cluster_score=cluster_score,
+            coherence_score=coherence_score,
+            answer_relevance=answer_relevance,
         ))
 
-    return suggestions, compute_silhouette(embeddings, labels)
+    return suggestions
 
 
-def build_suggestions(conversations: List[Dict[str, str]], generator: AnswerGenerator) -> SuggestionSummary:
+def build_suggestions(
+    conversations: List[Dict[str, str]],
+    generator: AnswerGenerator,
+    company_id: Optional[str] = None,
+) -> SuggestionSummary:
     if not conversations:
-        raise ValueError("No conversation pairs available.")
+        raise ValueError("No hay conversaciones disponibles.")
 
     conversations_by_company: Dict[str, List[Dict[str, str]]] = defaultdict(list)
     for item in conversations:
         conversations_by_company[company_key(item)].append(item)
 
     suggestions: List[SuggestionResponse] = []
-    silhouettes = []
     total_examples = 0
     existing_faqs = load_existing_faqs_by_company()
 
-    for company_id, items in conversations_by_company.items():
+    for cid, items in conversations_by_company.items():
         total_examples += sum(1 for item in items if is_good_faq_candidate(item.get("user_text", "")))
-        company_suggestions, silhouette = build_company_suggestions(
+        company_suggestions = build_company_suggestions(
             items,
             generator=generator,
-            existing_questions=existing_faqs.get(company_id, []),
+            existing_questions=existing_faqs.get(cid, []),
         )
         suggestions.extend(company_suggestions)
-        if silhouette is not None:
-            silhouettes.append(silhouette)
 
     if not suggestions:
-        raise ValueError("Insufficient data to generate FAQ suggestions.")
+        raise ValueError("Información insuficiente para generar FAQs.")
 
     avg_cluster = round(sum(s.cluster_size for s in suggestions) / len(suggestions), 2)
+    avg_coherence = round(sum(s.coherence_score for s in suggestions) / len(suggestions), 4)
+    avg_relevance = round(sum(s.answer_relevance for s in suggestions) / len(suggestions), 4)
+
     summary = SuggestionSummary(
         company_count=len(conversations_by_company),
         cluster_count=len(suggestions),
         total_examples=total_examples,
         average_cluster_size=avg_cluster,
-        silhouette_score=round(sum(silhouettes) / len(silhouettes), 4) if silhouettes else None,
+        avg_coherence_score=avg_coherence,
+        avg_answer_relevance=avg_relevance,
         suggestions=suggestions,
     )
-    save_json(summary.dict(), SUGGESTIONS_PATH)
-    save_run_metrics(summary)
+    save_json(summary.dict(), _suggestions_path(company_id))
+    save_run_metrics(summary, company_id)
     return summary

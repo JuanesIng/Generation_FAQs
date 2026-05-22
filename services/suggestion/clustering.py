@@ -1,18 +1,26 @@
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
-from sklearn.cluster import DBSCAN
-from sklearn.metrics import silhouette_score
+from sklearn.cluster import DBSCAN, HDBSCAN
 
 from faq_common import normalize_text
 
 
 def build_clusters(
     embeddings: np.ndarray,
+    algo: str = "hdbscan",
+    min_cluster_size: int = 3,
     eps: float = 0.34,
-    min_samples: int = 3,
+    min_samples: Optional[int] = None,
 ) -> np.ndarray:
-    model = DBSCAN(eps=eps, min_samples=min_samples, metric="cosine")
+    if algo == "hdbscan":
+        model = HDBSCAN(
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples or min_cluster_size,
+            metric="euclidean",  # embeddings L2-normalizados → equiv. a coseno
+        )
+    else:
+        model = DBSCAN(eps=eps, min_samples=min_cluster_size, metric="cosine")
     return model.fit_predict(embeddings)
 
 
@@ -49,11 +57,3 @@ def compute_support(indices: List[int], embeddings: np.ndarray) -> float:
     center = np.mean(embeddings[indices], axis=0)
     center = center / np.linalg.norm(center)
     return round(float(np.mean([np.dot(embeddings[idx], center) for idx in indices])), 4)
-
-
-def compute_silhouette(embeddings: np.ndarray, labels: np.ndarray) -> Optional[float]:
-    clean_labels = [label for label in labels if label != -1]
-    clean_embeddings = embeddings[labels != -1]
-    if len(set(clean_labels)) > 1 and len(clean_embeddings) > len(set(clean_labels)):
-        return round(silhouette_score(clean_embeddings, clean_labels, metric="cosine"), 4)
-    return None

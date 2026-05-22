@@ -5,9 +5,15 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
+class CompanyInfo(BaseModel):
+    id: str
+    name: Optional[str] = None
+
+
 class IngestRequest(BaseModel):
     limit: int = Field(15000, ge=100, le=50000)
     since_days: int = Field(180, ge=1, le=365)
+    company_id: Optional[str] = None
 
 
 class IngestResponse(BaseModel):
@@ -39,6 +45,8 @@ class SuggestionResponse(BaseModel):
     cluster_size: int
     support_examples: List[str]
     cluster_score: float
+    coherence_score: float
+    answer_relevance: float
 
 
 class SuggestionSummary(BaseModel):
@@ -46,7 +54,8 @@ class SuggestionSummary(BaseModel):
     cluster_count: int
     total_examples: int
     average_cluster_size: float
-    silhouette_score: Optional[float]
+    avg_coherence_score: Optional[float]
+    avg_answer_relevance: Optional[float]
     suggestions: List[SuggestionResponse]
 
 
@@ -61,7 +70,7 @@ class ValidationRequest(BaseModel):
     status: ValidationStatus
     notes: Optional[str] = None
     reviewed_at: Optional[datetime] = None
-
+    company_id: Optional[str] = None
 
 class ValidationResponse(BaseModel):
     suggestion_id: str
@@ -69,3 +78,6 @@ class ValidationResponse(BaseModel):
     status: ValidationStatus
     notes: Optional[str] = None
     reviewed_at: datetime
+
+class PromoteRequest(BaseModel):
+    company_id: Optional[str] = None

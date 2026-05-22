@@ -1,0 +1,26 @@
+{
+  "company_count": 1,
+  "cluster_count": 1,
+  "total_examples": 17,
+  "average_cluster_size": 5.0,
+  "avg_coherence_score": 0.7916,
+  "avg_answer_relevance": 0.4038,
+  "suggestions": [
+    {
+      "id": "110bbfb5-48eb-48d5-bd02-078772908add",
+      "company_id": "36",
+      "company_name": "Fitbox",
+      "question": "Pero no me da la información completa 🤷🏻",
+      "answer": "¡Hola! Estoy aquí para ayudarte con tu pregunta sobre Fitbox. Aquí tienes la información completa: **¿Cómo puedo obtener más detalles sobre Fitbox?** Para obtener más detalles sobre Fitbox, puedes seguir estos pasos: 1. **Contacta al Centro de Asistencia**: Si tienes alguna pregunta o necesitas ayuda con algo específico, por favor, contacta al Centro de Asistencia de Fitbox. Podrás recibir instrucciones específicas sobre cómo acceder a sus servicios. 2. **Verifica las Clases**: Si estás interesado en aprender más sobre CrossFit, puedes verificar las clases disponibles en Fitbox. La plataforma ofrece una variedad de cursos adaptados a diferentes niveles, desde principiantes hasta avanzados. 3. **Consulte Conectividad**: Si estás buscando conectividad, puedes consultar con los clientes inactiv",
+      "cluster_size": 5,
+      "support_examples": [
+        "Me puedes regalar información sobre crossfit❓",
+        "Pero no me da la información completa 🤷🏻",
+        "[persona] ah todos los clientes inactivos que estan en la plataforma de manera individual (por separado, personalizado con nombre de cada uno ) ¿Eso se podria?"
+      ],
+      "cluster_score": 29.41,
+      "coherence_score": 0.7916,
+      "answer_relevance": 0.4038
+    }
+  ]
+}
